@@ -5,7 +5,9 @@
   "publish": {
     "provider": "github",
     "owner": "TheLoserCoder",
-    "repo": "TgStickerEditor"
+    "repo": "TgStickerEditor",
+    "releaseType": "release",
+    "publishAutoUpdate": true
   },
   "directories": {
     "output": "release",
