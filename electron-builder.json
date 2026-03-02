@@ -1,8 +1,10 @@
 {
   "appId": "com.tgstickereditor.app",
   "productName": "TgStickerEditor",
+  "publish": null,
   "directories": {
-    "output": "release"
+    "output": "release",
+    "buildResources": "build"
   },
   "files": [
     "dist-main/**/*",
@@ -36,7 +38,8 @@
         "arch": ["x64"]
       }
     ],
-    "category": "Graphics"
+    "category": "Graphics",
+    "icon": "build/icon_linux.png"
   },
   "win": {
     "target": [
@@ -48,6 +51,7 @@
         "target": "portable",
         "arch": ["x64"]
       }
-    ]
+    ],
+    "icon": "build/icon_windows.ico"
   }
 }
