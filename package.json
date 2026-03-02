@@ -19,7 +19,10 @@
     "sticker",
     "editor"
   ],
-  "author": "",
+  "author": {
+    "name": "TgStickerEditor",
+    "email": "dev@tgstickereditor.com"
+  },
   "license": "ISC",
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.27",
