@@ -1,6 +1,7 @@
 {
   "appId": "com.tgstickereditor.app",
   "productName": "TgStickerEditor",
+  "asar": true,
   "publish": {
     "provider": "github",
     "owner": "TheLoserCoder",
@@ -29,7 +30,8 @@
   ],
   "asarUnpack": [
     "node_modules/sharp/**/*",
-    "node_modules/ffmpeg-static/**/*"
+    "node_modules/ffmpeg-static/**/*",
+    "node_modules/@img/**/*"
   ],
   "linux": {
     "target": [

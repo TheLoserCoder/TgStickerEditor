@@ -17,6 +17,7 @@ import { IIPCBridge } from '@/shared/domains/ipc/interfaces/IIPCBridge';
 import { ILoggerService } from '@/shared/domains/logger/interfaces/ILoggerService';
 import { ProtocolService } from './protocol';
 import { ProtocolScheme } from './protocol/enums';
+import { initSharp } from './utils/sharp-config';
 
 import './domains';
 
@@ -61,30 +62,39 @@ async function createWindow(): Promise<void> {
 }
 
 async function bootstrap(): Promise<void> {
+  // Инициализация Sharp для packaged приложения
+  initSharp();
+
   await container.resolve(SERVICE_REGISTRY_TOKEN);
-  
+
   loggerService = await container.resolve<ILoggerService>(LOGGER_SERVICE_TOKEN);
-  
+  console.log('[Bootstrap] Logger initialized');
+
   protocolService = new ProtocolService(loggerService);
   protocolService.registerHandlers();
-  
+  console.log('[Bootstrap] Protocol handlers registered');
+
   await container.resolve(ERROR_SERVICE_TOKEN);
-  
+  console.log('[Bootstrap] Error service initialized');
+
   await container.resolve(IPC_WRAPPER_FACTORY_TOKEN);
-  
+  console.log('[Bootstrap] IPC wrapper factory initialized');
+
   await createWindow();
-  
+
   if (!mainWindow) {
     throw new Error('Main window not created');
   }
-  
+
   initializeIPCBridge(mainWindow);
-  
+
   const notifier = await container.resolve<DataChangeNotifier>(DATA_CHANGE_NOTIFIER_TOKEN);
   const ipcBridge = await container.resolve<IIPCBridge>(IPC_BRIDGE_TOKEN);
   storeSyncService = new StoreSyncService(notifier, ipcBridge);
-  
+  console.log('[Bootstrap] Store sync service initialized');
+
   mainWindow.show();
+  console.log('[Bootstrap] Complete');
 }
 
 app.whenReady().then(bootstrap).catch(err => {

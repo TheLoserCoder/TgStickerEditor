@@ -6,7 +6,7 @@ import { FFmpegAdapter } from '@/main/domains/media-processing/adapters/FFmpegAd
 import { FileSystemService } from '@/main/domains/filesystem/services/FileSystemService';
 import { nanoid } from 'nanoid';
 import path from 'path';
-import ffmpegStatic from 'ffmpeg-static';
+import { getFFmpegPath } from '../../utils/ffmpeg-path';
 
 export async function execute(input: ImageInput): Promise<DetectedImage> {
   const startTime = Date.now();
@@ -15,7 +15,7 @@ export async function execute(input: ImageInput): Promise<DetectedImage> {
   const sharpAdapter = new SharpAdapter();
   const fileSystem = new FileSystemService();
   const animationDetector = new AnimationDetector(sharpAdapter, fileSystem);
-  const ffmpegAdapter = new FFmpegAdapter(ffmpegStatic || 'ffmpeg', 'ffprobe');
+  const ffmpegAdapter = new FFmpegAdapter(getFFmpegPath(), 'ffprobe');
 
   const sessionId = Date.now().toString();
   const uniqueId = nanoid();

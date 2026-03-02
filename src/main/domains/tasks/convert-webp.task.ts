@@ -4,8 +4,8 @@ import { ImageFragment, ConvertedFragment } from '@/shared/domains/image-process
 import { ImageFormat } from '@/shared/domains/image-processing/enums';
 import { SharpAdapter } from '@/main/domains/media-processing/adapters/SharpAdapter';
 import { FFmpegAdapter } from '@/main/domains/media-processing/adapters/FFmpegAdapter';
-import ffmpegStatic from 'ffmpeg-static';
 import ffmpeg from 'fluent-ffmpeg';
+import { getFFmpegPath } from '../../utils/ffmpeg-path';
 
 const WEBM_MAX_DURATION = 2.99;
 const WEBM_MAX_SIZE = 256 * 1024;
@@ -71,35 +71,35 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
       effort: 10
     });
 
-    const ffmpegAdapter = new FFmpegAdapter(ffmpegStatic || 'ffmpeg', 'ffprobe');
+    const ffmpegAdapter = new FFmpegAdapter(getFFmpegPath(), 'ffprobe');
     const outputPath = input.tempPath.replace(/\.[^.]+$/, '.webm');
-    
+
     const ffmpegMetadata = await ffmpegAdapter.getMetadata(gifPath);
     const currentDuration = ffmpegMetadata.duration || 0;
-    
+
     console.log(`[convert-webp] Fragment ${input.fragmentId}: FFmpeg duration=${currentDuration}s`);
-    
-    const speedFactor = currentDuration > WEBM_MAX_DURATION 
-      ? WEBM_MAX_DURATION / currentDuration 
+
+    const speedFactor = currentDuration > WEBM_MAX_DURATION
+      ? WEBM_MAX_DURATION / currentDuration
       : 1.0;
-    
+
     let crf = WEBM_MIN_CRF;
     let finalPath = outputPath;
-    
+
     while (crf <= WEBM_MAX_CRF) {
-      const setptsFilter = speedFactor < 1 
-        ? `setpts=${speedFactor.toFixed(4)}*PTS,` 
+      const setptsFilter = speedFactor < 1
+        ? `setpts=${speedFactor.toFixed(4)}*PTS,`
         : '';
-      
+
       const vf = `${setptsFilter}scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuva420p,fps=30`;
-      
+
       console.log(`[convert-webp] Fragment ${input.fragmentId}: Trying CRF=${crf}`);
-      
+
       await new Promise<void>((resolve, reject) => {
-        ffmpeg.setFfmpegPath(ffmpegStatic || 'ffmpeg');
-        
+        ffmpeg.setFfmpegPath(getFFmpegPath());
+
         let stderrOutput = '';
-        
+
         ffmpeg(gifPath)
           .outputOptions('-vf', vf)
           .outputOptions('-t', WEBM_MAX_DURATION.toString())
@@ -157,29 +157,29 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
   }
 
   if (input.isAnimated && input.format === ImageFormat.GIF) {
-    const ffmpegAdapter = new FFmpegAdapter(ffmpegStatic || 'ffmpeg', 'ffprobe');
+    const ffmpegAdapter = new FFmpegAdapter(getFFmpegPath(), 'ffprobe');
     const outputPath = input.tempPath.replace(/\.[^.]+$/, '.webm');
-    
+
     const metadata = await ffmpegAdapter.getMetadata(input.tempPath);
     const currentDuration = metadata.duration || 0;
-    
-    const speedFactor = currentDuration > WEBM_MAX_DURATION 
-      ? WEBM_MAX_DURATION / currentDuration 
+
+    const speedFactor = currentDuration > WEBM_MAX_DURATION
+      ? WEBM_MAX_DURATION / currentDuration
       : 1.0;
-    
+
     let crf = WEBM_MIN_CRF;
     let finalPath = outputPath;
-    
+
     while (crf <= WEBM_MAX_CRF) {
-      const setptsFilter = speedFactor < 1 
-        ? `setpts=${speedFactor.toFixed(4)}*PTS,` 
+      const setptsFilter = speedFactor < 1
+        ? `setpts=${speedFactor.toFixed(4)}*PTS,`
         : '';
-      
+
       const vf = `format=yuva420p,${setptsFilter}fps=30`;
-      
+
       await new Promise<void>((resolve, reject) => {
-        ffmpeg.setFfmpegPath(ffmpegStatic || 'ffmpeg');
-        
+        ffmpeg.setFfmpegPath(getFFmpegPath());
+
         ffmpeg(input.tempPath)
           .outputOptions('-vf', vf)
           .outputOptions('-t', WEBM_MAX_DURATION.toString())

@@ -7,26 +7,22 @@ import { container } from '../core/Container';
 import { MEDIA_PROCESSING_TOKENS } from './constants';
 import { FFmpegAdapter } from './adapters/FFmpegAdapter';
 import { SharpAdapter } from './adapters/SharpAdapter';
-
-import ffmpegStatic from 'ffmpeg-static';
-import sharp from 'sharp';
+import { getFFmpegPath, getFFprobePath } from '../../utils/ffmpeg-path';
 
 /**
  * Регистрация путей к бинарникам FFmpeg
  */
 container.register(
   MEDIA_PROCESSING_TOKENS.FFMPEG_PATH,
-  () => ffmpegStatic || 'ffmpeg'
+  () => getFFmpegPath()
 );
 
 /**
  * Регистрация пути к FFprobe
- * Примечание: ffprobe-static требует отдельной установки
- * Пока используем системный ffprobe или путь по умолчанию
  */
 container.register(
   MEDIA_PROCESSING_TOKENS.FFPROBE_PATH,
-  () => 'ffprobe'
+  () => getFFprobePath()
 );
 
 /**
