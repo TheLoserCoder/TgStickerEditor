@@ -17,6 +17,7 @@ export interface ImageInput {
   groupId: string;
   settings: ProcessingSettings;
   ffmpegPath?: string;
+  ffprobePath?: string;
 }
 
 export interface DetectedImage {
@@ -80,6 +81,8 @@ export interface ImageFragment {
   packId: string;
   packType: StickerPackType;
   groupId: string;
+  ffmpegPath?: string;
+  ffprobePath?: string;
 }
 
 export interface ConvertedFragment {

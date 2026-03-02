@@ -6,6 +6,7 @@
 import { app } from 'electron';
 import path from 'path';
 import ffmpegStatic from 'ffmpeg-static';
+import ffprobeStatic from '@ffprobe-installer/ffprobe';
 
 /**
  * Получить путь к бинарнику FFmpeg
@@ -20,8 +21,8 @@ export function getFFmpegPath(): string {
   if (app.isPackaged) {
     // Проверяем, содержит ли путь .asar (значит файл внутри ASAR)
     if (ffmpegStatic.includes('.asar') && !ffmpegStatic.includes('.asar.unpacked')) {
-      // Заменяем app.asar на app.asar.unpacked для бинарников (кроссплатформенно)
-      return ffmpegStatic.replace(path.sep + 'app.asar' + path.sep, path.sep + 'app.asar.unpacked' + path.sep);
+      // Заменяем app.asar на app.asar.unpacked (работает на Windows и Linux)
+      return ffmpegStatic.replace(/app\.asar([/\\])/, 'app.asar.unpacked$1');
     }
     
     return ffmpegStatic;
@@ -35,16 +36,23 @@ export function getFFmpegPath(): string {
  * Получить путь к бинарнику FFprobe
  */
 export function getFFprobePath(): string {
-  // ffmpeg-static предоставляет только ffmpeg
-  // Для ffprobe используем системный или ищем рядом с ffmpeg
-  const ffmpegPath = getFFmpegPath();
-  
-  // Пробуем найти ffprobe рядом с ffmpeg
-  const ffprobePath = ffmpegPath.replace('ffmpeg', 'ffprobe');
-  
-  // Проверяем существование файла (в runtime)
-  // В main процессе можно использовать fs, но здесь возвращаем путь
-  return ffprobePath;
+  if (!ffprobeStatic.path) {
+    return 'ffprobe'; // Fallback на системный ffprobe
+  }
+
+  // В packaged приложении ASAR unpacked файлы доступны по особому пути
+  if (app.isPackaged) {
+    // Проверяем, содержит ли путь .asar (значит файл внутри ASAR)
+    if (ffprobeStatic.path.includes('.asar') && !ffprobeStatic.path.includes('.asar.unpacked')) {
+      // Заменяем app.asar на app.asar.unpacked (работает на Windows и Linux)
+      return ffprobeStatic.path.replace(/app\.asar([/\\])/, 'app.asar.unpacked$1');
+    }
+    
+    return ffprobeStatic.path;
+  }
+
+  // В режиме разработки используем путь как есть
+  return ffprobeStatic.path;
 }
 
 /**

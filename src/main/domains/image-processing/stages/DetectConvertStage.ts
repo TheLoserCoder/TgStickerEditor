@@ -6,7 +6,7 @@ import { ProcessingStage, StageWeight } from '../enums';
 import { PipelineData } from '../../pipeline/core/PipelineData';
 import { appendFileSync } from 'fs';
 import { join } from 'path';
-import { getFFmpegPath } from '../../../utils/ffmpeg-path';
+import { getFFmpegPath, getFFprobePath } from '../../../utils/ffmpeg-path';
 
 const LOG_PATH = join(process.cwd(), 'progress.log');
 
@@ -41,7 +41,7 @@ export class DetectConvertStage extends WorkerStage<ImageInput, DetectedImage> {
 
     const result = await this.taskBalancer.execute<ImageInput, DetectedImage>({
       taskType: this.getTaskType(),
-      data: { ...data.payload, ffmpegPath: getFFmpegPath() },
+      data: { ...data.payload, ffmpegPath: getFFmpegPath(), ffprobePath: getFFprobePath() },
       priority: this.priority,
       weight: this.weight
     });

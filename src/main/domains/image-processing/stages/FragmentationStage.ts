@@ -6,6 +6,7 @@ import { RescaledImage, ImageFragment } from '../../../../shared/domains/image-p
 import { ProcessingStage, StageWeight } from '../enums';
 import { appendFileSync } from 'fs';
 import { join } from 'path';
+import { getFFmpegPath, getFFprobePath } from '../../../utils/ffmpeg-path';
 
 const POINTS_PER_STAGE = 10;
 const LOG_PATH = join(process.cwd(), 'progress.log');
@@ -53,7 +54,13 @@ export class FragmentationStage implements IPipelineStage<RescaledImage, ImageFr
         throw new Error('Processing aborted');
       }
       
-      const fragmentData = data.withPayload(fragment).withMetadata({
+      const fragmentWithPaths = {
+        ...fragment,
+        ffmpegPath: getFFmpegPath(),
+        ffprobePath: getFFprobePath()
+      };
+      
+      const fragmentData = data.withPayload(fragmentWithPaths).withMetadata({
         fragmentPoints: pointsPerFragment
       });
       

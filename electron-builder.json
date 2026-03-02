@@ -28,11 +28,17 @@
       "from": "node_modules/ffmpeg-static",
       "to": "app.asar.unpacked/node_modules/ffmpeg-static",
       "filter": ["**/*"]
+    },
+    {
+      "from": "node_modules/@ffprobe-installer",
+      "to": "app.asar.unpacked/node_modules/@ffprobe-installer",
+      "filter": ["**/*"]
     }
   ],
   "asarUnpack": [
     "node_modules/sharp/**/*",
     "node_modules/ffmpeg-static/**/*",
+    "node_modules/@ffprobe-installer/**/*",
     "node_modules/@img/**/*"
   ],
   "linux": {
