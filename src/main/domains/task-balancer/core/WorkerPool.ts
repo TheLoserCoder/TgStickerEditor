@@ -1,4 +1,5 @@
 import { Worker } from 'worker_threads';
+import { pathToFileURL } from 'url';
 import { WorkerMessage, WorkerResponse } from '../types';
 import { IDLE_TIMEOUT } from '../constants';
 
@@ -65,7 +66,8 @@ export class WorkerPool {
    * Создать нового воркера
    */
   private createWorker(): Worker {
-    const worker = new Worker(this.workerPath);
+    const workerURL = pathToFileURL(this.workerPath).href;
+    const worker = new Worker(workerURL);
 
     worker.on('message', (response: WorkerResponse) => {
       const pending = this.pendingTasks.get(response.id);
