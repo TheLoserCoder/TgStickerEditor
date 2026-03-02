@@ -4,11 +4,19 @@ import { TaskBalancerService } from './services/TaskBalancerService';
 import { ITaskBalancerService } from './services/ITaskBalancerService';
 import { TASK_BALANCER_SERVICE_TOKEN } from './constants';
 import { BalancerConfig } from './types';
+import { getDistMainPath } from '@/main/config/paths';
+
+/**
+ * Получить путь к worker файлу с учётом packaged режима
+ */
+function getWorkerPath(): string {
+  return path.join(getDistMainPath(), 'workers', 'universal.worker.js');
+}
 
 /**
  * Регистрация TaskBalancer домена в Container
  */
-const workerPath = path.resolve(__dirname, './workers/universal.worker.js');
+const workerPath = getWorkerPath();
 
 const config: BalancerConfig = {
   workerPath

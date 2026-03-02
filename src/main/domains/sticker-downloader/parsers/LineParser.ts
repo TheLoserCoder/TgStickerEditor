@@ -9,7 +9,7 @@ export class LineParser implements IParser {
   constructor(private httpClient: IHttpClient) {}
   
   canHandle(url: string): boolean {
-    return url.includes('store.line.me/stickershop');
+    return url.includes('store.line.me/stickershop') || url.includes('store.line.me/emojishop');
   }
   
   async parse(url: string): Promise<ParsedSticker[]> {
