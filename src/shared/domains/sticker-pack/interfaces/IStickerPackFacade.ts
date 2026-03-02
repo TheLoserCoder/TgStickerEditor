@@ -15,6 +15,7 @@ export interface IStickerPackFacade {
   addFragments(packId: string, fragments: Array<{tempPath: string; fileName: string; groupId: string}>, gridData: Array<{id: string; groupId: string; row: number; col: number}>): Promise<GridLayout>;
   removeFragment(packId: string, fragmentId: string): Promise<void>;
   updateFragmentGroup(packId: string, fragmentId: string, groupId: string | null): Promise<Fragment>;
+  /** Возвращает имя файла фрагмента (не полный путь) */
   getFragmentPath(packId: string, fragmentId: string): Promise<string | null>;
 
   initializeGrid(packId: string): Promise<GridLayout>;

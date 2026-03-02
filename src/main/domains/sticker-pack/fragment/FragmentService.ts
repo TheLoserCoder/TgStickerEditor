@@ -68,12 +68,7 @@ export class FragmentService implements IFragmentService {
   }
 
   async getFragmentPath(folderPath: string, fragmentId: string): Promise<string | null> {
-    const fileName = await this.manifestService.getFragmentFileName(folderPath, fragmentId);
-    if (!fileName) {
-      return null;
-    }
-
-    return await this.fragmentFileRepo.getFilePath(folderPath, fileName);
+    return await this.manifestService.getFragmentFileName(folderPath, fragmentId);
   }
 
   async removeFragmentsBatch(folderPath: string, fragmentIds: string[]): Promise<void> {

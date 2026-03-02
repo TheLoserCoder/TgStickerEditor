@@ -7,5 +7,6 @@ export interface IFragmentService {
   removeFragmentsBatch(folderPath: string, fragmentIds: string[]): Promise<void>;
   updateFragmentGroup(folderPath: string, fragmentId: string, groupId: string | null): Promise<Fragment>;
   updateFragmentGroupBatch(folderPath: string, fragmentIds: string[], groupId: string | null): Promise<Fragment[]>;
+  /** Возвращает имя файла фрагмента (не полный путь) */
   getFragmentPath(folderPath: string, fragmentId: string): Promise<string | null>;
 }

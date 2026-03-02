@@ -20,14 +20,13 @@ export const usePackGrid = (packId: string) => {
           setGrid(gridLayout);
           
           const paths = new Map<string, string>();
-          for (const cell of gridLayout.cells) {
-            if (cell.fragmentId) {
-              const path = await facade.getFragmentPath(packId, cell.fragmentId);
-              if (path) {
-                const pack = await facade.getPack(packId);
-                if (pack) {
-                  const packFolderName = `${pack.name}_${pack.id}`;
-                  const fileName = path.split('/').pop() || path.split('\\').pop();
+          const pack = await facade.getPack(packId);
+          if (pack) {
+            const packFolderName = `${pack.name}_${pack.id}`;
+            for (const cell of gridLayout.cells) {
+              if (cell.fragmentId) {
+                const fileName = await facade.getFragmentPath(packId, cell.fragmentId);
+                if (fileName) {
                   paths.set(cell.fragmentId, `sticker-packs://${packFolderName}/fragments/${fileName}`);
                 }
               }

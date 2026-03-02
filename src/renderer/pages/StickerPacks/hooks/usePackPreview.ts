@@ -18,9 +18,8 @@ export const usePackPreview = (packId: string, fragments: Fragment[]) => {
       const paths: string[] = [];
 
       for (const fragment of previewFragments) {
-        const path = await facade.getFragmentPath(packId, fragment.id);
-        if (path) {
-          const fileName = path.split('/').pop() || path.split('\\').pop();
+        const fileName = await facade.getFragmentPath(packId, fragment.id);
+        if (fileName) {
           paths.push(`sticker-packs://${packFolderName}/fragments/${fileName}`);
         }
       }
