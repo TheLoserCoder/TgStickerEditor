@@ -18,15 +18,10 @@ export function getFFmpegPath(): string {
 
   // В packaged приложении ASAR unpacked файлы доступны по особому пути
   if (app.isPackaged) {
-    // ffmpeg-static возвращает путь вида:
-    // /path/to/app/resources/app.asar.unpacked/node_modules/ffmpeg-static/ffmpeg
-    // или /path/to/app/resources/app.asar/node_modules/ffmpeg-static/ffmpeg
-    // Нам нужно убедиться, что путь ведёт к unpacked файлу
-    
     // Проверяем, содержит ли путь .asar (значит файл внутри ASAR)
     if (ffmpegStatic.includes('.asar') && !ffmpegStatic.includes('.asar.unpacked')) {
-      // Заменяем .asar на .asar.unpacked для бинарников
-      return ffmpegStatic.replace('/app.asar/', '/app.asar.unpacked/');
+      // Заменяем app.asar на app.asar.unpacked для бинарников (кроссплатформенно)
+      return ffmpegStatic.replace(path.sep + 'app.asar' + path.sep, path.sep + 'app.asar.unpacked' + path.sep);
     }
     
     return ffmpegStatic;
