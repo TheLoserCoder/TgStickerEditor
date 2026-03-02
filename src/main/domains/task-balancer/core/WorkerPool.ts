@@ -66,7 +66,7 @@ export class WorkerPool {
    * Создать нового воркера
    */
   private createWorker(): Worker {
-    const workerURL = pathToFileURL(this.workerPath).href;
+    const workerURL = pathToFileURL(this.workerPath);
     const worker = new Worker(workerURL);
 
     worker.on('message', (response: WorkerResponse) => {
