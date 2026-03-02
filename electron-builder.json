@@ -1,7 +1,11 @@
 {
   "appId": "com.tgstickereditor.app",
   "productName": "TgStickerEditor",
-  "publish": null,
+  "publish": {
+    "provider": "github",
+    "owner": "TheLoserCoder",
+    "repo": "TgStickerEditor"
+  },
   "directories": {
     "output": "release",
     "buildResources": "build"
