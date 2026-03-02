@@ -1,5 +1,6 @@
 import { parentPort } from 'worker_threads';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { WorkerMessage, WorkerResponse } from '../types';
 
 /**
@@ -13,7 +14,8 @@ if (!parentPort) {
 parentPort.on('message', async (message: WorkerMessage) => {
   try {
     const taskPath = path.join(__dirname, '..', 'tasks', `${message.taskType}.task.js`);
-    const taskModule = await import(taskPath);
+    const taskURL = pathToFileURL(taskPath).href;
+    const taskModule = await import(taskURL);
     
     if (typeof taskModule.execute !== 'function') {
       throw new Error(`Task "${message.taskType}" does not export an execute function`);
