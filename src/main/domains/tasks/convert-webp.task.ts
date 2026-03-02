@@ -70,7 +70,7 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
       effort: 10
     });
 
-    const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', 'ffprobe');
+    const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', input.ffprobePath || 'ffprobe');
     const outputPath = input.tempPath.replace(/\.[^.]+$/, '.webm');
 
     const ffmpegMetadata = await ffmpegAdapter.getMetadata(gifPath);
@@ -156,7 +156,7 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
   }
 
   if (input.isAnimated && input.format === ImageFormat.GIF) {
-    const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', 'ffprobe');
+    const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', input.ffprobePath || 'ffprobe');
     const outputPath = input.tempPath.replace(/\.[^.]+$/, '.webm');
 
     const metadata = await ffmpegAdapter.getMetadata(input.tempPath);

@@ -14,7 +14,7 @@ export async function execute(input: ImageInput): Promise<DetectedImage> {
   const sharpAdapter = new SharpAdapter();
   const fileSystem = new FileSystemService();
   const animationDetector = new AnimationDetector(sharpAdapter, fileSystem);
-  const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', 'ffprobe');
+  const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', input.ffprobePath || 'ffprobe');
 
   const sessionId = Date.now().toString();
   const uniqueId = nanoid();
