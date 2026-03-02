@@ -1,0 +1,58 @@
+.contentContainer {
+  max-width: 800px;
+}
+
+.contentHeader {
+  margin-bottom: 24px;
+}
+
+.sidebarContent {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionButton {
+  width: 100%;
+  justify-content: flex-start;
+  padding: var(--space-2) !important;
+  margin: 0 !important;
+  height: auto !important;
+  min-height: 36px !important;
+  box-sizing: border-box !important;
+}
+
+.settingRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--gray-2);
+  border-radius: var(--radius-md);
+}
+
+.emptyState {
+  padding: 24px;
+  text-align: center;
+  color: var(--gray-9);
+}
+
+.botCard {
+  padding: 12px;
+  background: var(--gray-2);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.botInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.botActions {
+  display: flex;
+  gap: var(--space-2);
+}

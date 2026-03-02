@@ -1,0 +1,56 @@
+/**
+ * Регистрация домена MediaProcessing в Container
+ * Зона ответственности: DI регистрация адаптеров и зависимостей
+ */
+
+import { container } from '../core/Container';
+import { MEDIA_PROCESSING_TOKENS } from './constants';
+import { FFmpegAdapter } from './adapters/FFmpegAdapter';
+import { SharpAdapter } from './adapters/SharpAdapter';
+
+import ffmpegStatic from 'ffmpeg-static';
+import sharp from 'sharp';
+
+/**
+ * Регистрация путей к бинарникам FFmpeg
+ */
+container.register(
+  MEDIA_PROCESSING_TOKENS.FFMPEG_PATH,
+  () => ffmpegStatic || 'ffmpeg'
+);
+
+/**
+ * Регистрация пути к FFprobe
+ * Примечание: ffprobe-static требует отдельной установки
+ * Пока используем системный ffprobe или путь по умолчанию
+ */
+container.register(
+  MEDIA_PROCESSING_TOKENS.FFPROBE_PATH,
+  () => 'ffprobe'
+);
+
+/**
+ * Регистрация FFmpegAdapter
+ */
+container.register(
+  MEDIA_PROCESSING_TOKENS.FFMPEG_ADAPTER,
+  () => new FFmpegAdapter(
+    container.resolve<string>(MEDIA_PROCESSING_TOKENS.FFMPEG_PATH),
+    container.resolve<string>(MEDIA_PROCESSING_TOKENS.FFPROBE_PATH)
+  )
+);
+
+/**
+ * Регистрация SharpAdapter
+ */
+container.register(
+  MEDIA_PROCESSING_TOKENS.SHARP_ADAPTER,
+  () => new SharpAdapter()
+);
+
+// Экспорты публичного API
+export type { IFFmpegAdapter } from './interfaces/IFFmpegAdapter';
+export type { ISharpAdapter } from './interfaces/ISharpAdapter';
+export { MEDIA_PROCESSING_TOKENS } from './constants';
+export { MediaFormat, MediaProcessingError } from './enums';
+export * from './types';

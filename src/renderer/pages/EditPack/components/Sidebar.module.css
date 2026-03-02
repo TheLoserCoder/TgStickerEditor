@@ -1,0 +1,24 @@
+.sidebar {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-12);
+}
+
+.select {
+  width: 100%;
+}
+
+.value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--gray-12);
+}

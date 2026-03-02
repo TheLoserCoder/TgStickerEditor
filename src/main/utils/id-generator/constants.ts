@@ -1,0 +1,1 @@
+export const ID_GENERATOR_TOKEN = 'ID_GENERATOR';

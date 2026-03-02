@@ -1,0 +1,8 @@
+export const CSS_VALUES = {
+  MAX_CONTENT_WIDTH: '800px',
+  CONTENT_HEADER_MARGIN: '24px',
+  SECTION_GAP: '8px',
+  SETTING_ROW_PADDING: '12px',
+  EMPTY_STATE_PADDING: '24px',
+  BOT_CARD_PADDING: '12px'
+} as const;

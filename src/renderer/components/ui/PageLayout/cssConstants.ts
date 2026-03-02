@@ -1,0 +1,8 @@
+export const CSS_VALUES = {
+  SIDEBAR_WIDTH: '290px',
+  SIDEBAR_PADDING: '16px',
+  SIDEBAR_GAP: '12px',
+  SIDEBAR_BACK_BUTTON_MARGIN: '8px',
+  CONTENT_PADDING: '24px',
+  BORDER_WIDTH: '1px'
+} as const;
