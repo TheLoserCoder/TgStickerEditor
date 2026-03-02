@@ -5,7 +5,6 @@ import { ImageFormat } from '@/shared/domains/image-processing/enums';
 import { SharpAdapter } from '@/main/domains/media-processing/adapters/SharpAdapter';
 import { FFmpegAdapter } from '@/main/domains/media-processing/adapters/FFmpegAdapter';
 import ffmpeg from 'fluent-ffmpeg';
-import { getFFmpegPath } from '../../utils/ffmpeg-path';
 
 const WEBM_MAX_DURATION = 2.99;
 const WEBM_MAX_SIZE = 256 * 1024;
@@ -71,7 +70,7 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
       effort: 10
     });
 
-    const ffmpegAdapter = new FFmpegAdapter(getFFmpegPath(), 'ffprobe');
+    const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', 'ffprobe');
     const outputPath = input.tempPath.replace(/\.[^.]+$/, '.webm');
 
     const ffmpegMetadata = await ffmpegAdapter.getMetadata(gifPath);
@@ -96,7 +95,7 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
       console.log(`[convert-webp] Fragment ${input.fragmentId}: Trying CRF=${crf}`);
 
       await new Promise<void>((resolve, reject) => {
-        ffmpeg.setFfmpegPath(getFFmpegPath());
+        ffmpeg.setFfmpegPath(input.ffmpegPath || 'ffmpeg');
 
         let stderrOutput = '';
 
@@ -157,7 +156,7 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
   }
 
   if (input.isAnimated && input.format === ImageFormat.GIF) {
-    const ffmpegAdapter = new FFmpegAdapter(getFFmpegPath(), 'ffprobe');
+    const ffmpegAdapter = new FFmpegAdapter(input.ffmpegPath || 'ffmpeg', 'ffprobe');
     const outputPath = input.tempPath.replace(/\.[^.]+$/, '.webm');
 
     const metadata = await ffmpegAdapter.getMetadata(input.tempPath);
@@ -178,7 +177,7 @@ export async function execute(input: ImageFragment): Promise<ConvertedFragment> 
       const vf = `format=yuva420p,${setptsFilter}fps=30`;
 
       await new Promise<void>((resolve, reject) => {
-        ffmpeg.setFfmpegPath(getFFmpegPath());
+        ffmpeg.setFfmpegPath(input.ffmpegPath || 'ffmpeg');
 
         ffmpeg(input.tempPath)
           .outputOptions('-vf', vf)

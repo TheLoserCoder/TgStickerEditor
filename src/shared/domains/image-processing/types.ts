@@ -16,6 +16,7 @@ export interface ImageInput {
   packType: StickerPackType;
   groupId: string;
   settings: ProcessingSettings;
+  ffmpegPath?: string;
 }
 
 export interface DetectedImage {
