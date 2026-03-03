@@ -107,7 +107,7 @@ export const PackView: React.FC = () => {
         <ImageIcon />
         {PACK_VIEW_LABELS.ADD_IMAGES}
       </Button>
-      {pack && pack.fragments.length > 0 && (
+      {pack && pack.fragments.length > 0 && grid && (
         <Button size={PACK_VIEW_UI.BUTTON_SIZE} onClick={handleNormalizeGrid}>
           <ResetIcon />
           {PACK_VIEW_LABELS.NORMALIZE_GRID}

@@ -35,8 +35,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleZoomIn = () => onSettingsChange({ zoom: Math.min(settings.zoom + ZOOM_STEP, MAX_ZOOM) });
   const handleZoomOut = () => onSettingsChange({ zoom: Math.max(settings.zoom - ZOOM_STEP, MIN_ZOOM) });
   const handleZoomReset = () => onSettingsChange({ zoom: 100 });
-  const handleNormalize = () => onSettingsChange({ columns: 1, rows: 1 });
-  const hasGrid = settings.columns > 1 || settings.rows > 1;
 
   return (
     <div className={styles.sidebar}>
@@ -159,13 +157,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <DownloadIcon />
           {SIDEBAR_LABELS.ADD_NETWORK}
         </Button>
-
-        {hasGrid && (
-          <Button variant={SIDEBAR_CONSTANTS.BUTTON_VARIANT_OUTLINE} size={SIDEBAR_CONSTANTS.BUTTON_SIZE} onClick={handleNormalize} style={{ width: '100%' }}>
-            <ResetIcon />
-            {SIDEBAR_LABELS.NORMALIZE}
-          </Button>
-        )}
 
         <Button 
           variant={SIDEBAR_CONSTANTS.BUTTON_VARIANT_SOLID} 

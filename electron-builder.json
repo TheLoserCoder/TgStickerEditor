@@ -37,10 +37,12 @@
   ],
   "asarUnpack": [
     "node_modules/sharp/**/*",
+    "node_modules/@img/**/*",
     "node_modules/ffmpeg-static/**/*",
-    "node_modules/@ffprobe-installer/**/*",
-    "node_modules/@img/**/*"
+    "node_modules/@ffprobe-installer/**/*"
   ],
+  "npmRebuild": true,
+  "buildDependenciesFromSource": false,
   "linux": {
     "target": [
       {
