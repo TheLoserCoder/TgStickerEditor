@@ -9,7 +9,9 @@ export abstract class BaseRepository<E, D> {
   ) {}
 
   public transform(result: any): any {
-    if (!result) return null;
+    if (result === undefined || result === null) {
+      return { deleted: true };
+    }
 
     if (this.isEntity(result)) {
       return Array.isArray(result) 

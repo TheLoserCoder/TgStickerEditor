@@ -22,57 +22,93 @@ export class TelegramPackFacade implements ITelegramPackFacade {
   ) {}
 
   async uploadPack(request: UploadPackRequest): Promise<UploadResult> {
+    console.log('[TelegramPackFacade] uploadPack started', { packId: request.packId, packName: request.packName });
+    
     const pack = await this.stickerPackFacade.getPack(request.packId);
     
     if (!pack || !pack.gridLayout) {
+      console.error('[TelegramPackFacade] Pack or grid not found');
       return { success: false, error: 'Пак или сетка не найдены' };
     }
 
     if (!request.botToken || !request.userId || !request.packName || !request.packTitle || !request.stickerType || !request.botId) {
+      console.error('[TelegramPackFacade] Missing required data');
       return { success: false, error: 'Недостаточно данных для загрузки' };
     }
 
+    console.log('[TelegramPackFacade] Creating GrammyAdapter');
     const adapter = new GrammyAdapter(request.botToken);
+    
+    console.log('[TelegramPackFacade] Validating bot');
+    const botValidation = await adapter.validateBot();
+    console.log('[TelegramPackFacade] Bot validation result:', botValidation);
+    
+    if (!botValidation.isValid) {
+      console.error('[TelegramPackFacade] Bot validation failed');
+      return { success: false, error: 'Токен бота недействителен или бот неактивен' };
+    }
+
     const packPath = await this.stickerPackFacade.getStickerPackPath(request.packId);
     const flatCells = gridToFlatArray(pack.gridLayout);
 
     try {
       if (flatCells.length === 0) {
+        console.error('[TelegramPackFacade] No cells to upload');
         return { success: false, error: 'Нет ячеек для загрузки' };
       }
 
-      const bot = await adapter['bot'].api.getMe();
-      const finalPackName = this.ensurePackNameSuffix(request.packName, bot.username);
-
-      await this.manifestService.update(packPath, {
-        telegramPack: {
-          status: TelegramUploadStatus.UPLOADING,
-          name: finalPackName,
-          url: null,
-          botId: request.botId,
-          userId: request.userId
-        }
-      });
+      const fullPackName = `${request.packName}_by_${botValidation.username}`;
+      console.log('[TelegramPackFacade] Full pack name:', fullPackName);
 
       const firstCell = flatCells[0];
       const firstFragment = isEmptyCell(firstCell) ? null : pack.fragments.find(f => f.id === firstCell.fragmentId);
       
-      await this.createStickerSet(adapter, request, finalPackName, firstCell, firstFragment, packPath);
-      await this.uploadStickersToSet(adapter, request, finalPackName, flatCells.slice(1), pack, packPath, 1);
+      console.log('[TelegramPackFacade] Creating sticker set');
+      await this.createStickerSet(adapter, request, fullPackName, firstCell, firstFragment, packPath);
+      console.log('[TelegramPackFacade] Sticker set created successfully');
+      
+      console.log('[TelegramPackFacade] Getting sticker set info');
+      const stickerSet = await adapter.getStickerSet(fullPackName);
+      if (!stickerSet) {
+        console.error('[TelegramPackFacade] Failed to get created sticker set');
+        return { success: false, error: 'Не удалось получить созданный стикерпак' };
+      }
+      
+      const packUrl = `${TELEGRAM_PACK_URL_BASE}${stickerSet.name}`;
+      console.log('[TelegramPackFacade] Pack URL:', packUrl);
+      
+      console.log('[TelegramPackFacade] Updating manifest with pack info');
+      await this.manifestService.update(packPath, {
+        telegramPack: {
+          status: TelegramUploadStatus.UPLOADING,
+          name: stickerSet.name,
+          url: packUrl,
+          botId: request.botId,
+          userId: request.userId
+        }
+      });
+      
+      console.log('[TelegramPackFacade] Uploading remaining stickers');
+      await this.uploadStickersToSet(adapter, request, fullPackName, flatCells.slice(1), pack, packPath, 1);
 
+      console.log('[TelegramPackFacade] Updating manifest status to UPLOADED');
       await this.manifestService.update(packPath, {
         telegramPack: {
           status: TelegramUploadStatus.UPLOADED,
-          name: finalPackName,
-          url: `${TELEGRAM_PACK_URL_BASE}${finalPackName}`,
+          name: stickerSet.name,
+          url: packUrl,
           botId: request.botId,
           userId: request.userId
         }
       });
 
-      const packUrl = `${TELEGRAM_PACK_URL_BASE}${finalPackName}`;
+      console.log('[TelegramPackFacade] Sending success message to user');
+      await adapter.sendMessage(request.userId, `Стикерпак успешно создан!\n${packUrl}`);
+
+      console.log('[TelegramPackFacade] Upload completed successfully');
       return { success: true, packUrl };
     } catch (error: any) {
+      console.error('[TelegramPackFacade] Upload error:', error);
       return this.handleError(error);
     }
   }
@@ -94,6 +130,12 @@ export class TelegramPackFacade implements ITelegramPackFacade {
     }
 
     const adapter = new GrammyAdapter(botToken);
+    
+    const botValidation = await adapter.validateBot();
+    if (!botValidation.isValid) {
+      return { success: false, error: 'Токен бота недействителен или бот неактивен' };
+    }
+
     const packPath = await this.stickerPackFacade.getStickerPackPath(request.packId);
     const flatCells = gridToFlatArray(pack.gridLayout);
 
@@ -142,6 +184,9 @@ export class TelegramPackFacade implements ITelegramPackFacade {
       });
 
       const packUrl = `${TELEGRAM_PACK_URL_BASE}${pack.telegramPack.name}`;
+      
+      await adapter.sendMessage(userId, `Стикерпак успешно обновлен!\n${packUrl}`);
+
       return { success: true, packUrl };
     } catch (error: any) {
       return this.handleError(error);
@@ -266,11 +311,6 @@ export class TelegramPackFacade implements ITelegramPackFacade {
 
   private getEmptyImageSize(stickerType: any): number {
     return stickerType === 'custom_emoji' ? TELEGRAM_STICKER_SIZE.EMOJI : TELEGRAM_STICKER_SIZE.STICKER;
-  }
-
-  private ensurePackNameSuffix(packName: string, botUsername: string): string {
-    const suffix = `_by_${botUsername}`;
-    return packName.endsWith(suffix) ? packName : `${packName}${suffix}`;
   }
 
   private detectFormat(filePath: string): TelegramStickerFormat {

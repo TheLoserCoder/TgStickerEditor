@@ -19,7 +19,7 @@ export const getDistMainPath = (): string => {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, 'app.asar', 'dist-main');
   }
-  return path.join(__dirname, '../../dist-main');
+  return path.join(process.cwd(), 'dist-main');
 };
 
 export const getStickerPackBasePath = (): string => {

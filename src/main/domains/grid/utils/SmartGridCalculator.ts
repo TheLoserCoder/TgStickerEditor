@@ -881,7 +881,7 @@ export class SmartGridCalculator implements ISmartGridCalculator {
 
   createGroupFromFragments(layout: GridLayout, cellIds: string[], newGroupId: string): GridLayout {
     const newCells = layout.cells.map(cell => {
-      if (cellIds.includes(cell.fragmentId)) {
+      if (cellIds.includes(cell.id)) {
         return { ...cell, groupId: newGroupId };
       }
       return cell;
@@ -893,7 +893,7 @@ export class SmartGridCalculator implements ISmartGridCalculator {
 
   removeFragmentsFromGroup(layout: GridLayout, cellIds: string[]): GridLayout {
     const newCells = layout.cells.map(cell => {
-      if (cellIds.includes(cell.fragmentId)) {
+      if (cellIds.includes(cell.id)) {
         return { ...cell, groupId: 'default' };
       }
       return cell;

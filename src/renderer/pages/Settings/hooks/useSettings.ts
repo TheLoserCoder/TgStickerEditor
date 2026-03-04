@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStateValue } from '@/renderer/domains/store/hooks';
 import { useTheme } from '@/renderer/hooks/useTheme';
 import { useBotService } from '@/renderer/hooks/useBotService';
-import { useConfirmation } from '@/renderer/utils/confirmation';
+import { useConfirm } from '@/renderer/utils/confirmation';
 import { SECTIONS } from '../constants';
 import { BOTS_SLICE_NAME } from '@/renderer/domains/store/slices/constants';
 import { Bot } from '@/shared/domains/bot/types';
@@ -20,7 +20,7 @@ export const useSettings = () => {
   const { theme, setTheme } = useTheme();
   const bots = useStateValue<Bot[]>(`${BOTS_SLICE_NAME}.bots`) || [];
   const botService = useBotService();
-  const { confirm } = useConfirmation();
+  const confirm = useConfirm();
 
   const handleBack = () => {
     navigate('/');

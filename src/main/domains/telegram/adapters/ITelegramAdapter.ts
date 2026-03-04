@@ -1,4 +1,6 @@
 export interface ITelegramAdapter {
+  validateBot(): Promise<{ isValid: boolean; botName: string }>;
+
   createStickerSet(
     userId: string,
     name: string,
@@ -22,4 +24,6 @@ export interface ITelegramAdapter {
   deleteStickerFromSet(fileId: string): Promise<void>;
 
   setStickerPositionInSet(fileId: string, position: number): Promise<void>;
+
+  sendMessage(userId: string, text: string): Promise<void>;
 }

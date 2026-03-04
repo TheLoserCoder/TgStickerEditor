@@ -44,11 +44,10 @@ export class BotRepository extends BaseRepository<BotEntity, Bot> implements IBo
     return Object.values(bots).map(dto => this.mapper.fromDTO(dto));
   }
 
-  async delete(id: string): Promise<{ id: string }> {
+  async delete(id: string): Promise<void> {
     const bots = await this.getAllBots();
     delete bots[id];
     await this.storeService.set(BotStoreKey.BOTS, bots);
-    return { id };
   }
 
   private async getAllBots(): Promise<Record<string, Bot>> {

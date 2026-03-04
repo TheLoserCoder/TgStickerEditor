@@ -67,6 +67,15 @@ export class GrammyAdapter implements ITelegramAdapter {
     });
   }
 
+  async validateBot(): Promise<{ isValid: boolean; botName: string; username: string }> {
+    try {
+      const bot = await this.bot.api.getMe();
+      return { isValid: true, botName: bot.first_name, username: bot.username || '' };
+    } catch (error) {
+      return { isValid: false, botName: '', username: '' };
+    }
+  }
+
   async createStickerSet(
     userId: string,
     name: string,
@@ -133,5 +142,9 @@ export class GrammyAdapter implements ITelegramAdapter {
 
   async setStickerPositionInSet(fileId: string, position: number): Promise<void> {
     await this.bot.api.setStickerPositionInSet(fileId, position);
+  }
+
+  async sendMessage(userId: string, text: string): Promise<void> {
+    await this.bot.api.sendMessage(userId, text);
   }
 }

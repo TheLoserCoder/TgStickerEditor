@@ -12,6 +12,8 @@ export class LogErrorHandler implements IErrorHandler {
   constructor(private loggerService: ILoggerService) {}
 
   handle(entry: ErrorEntry): void {
+    console.error(`[ErrorHandler] ${entry.context.className}.${entry.context.methodName}:`, entry.error);
+    
     const logLevel: LogLevel = entry.severity === 'critical' || entry.severity === 'error' 
       ? 'error' 
       : entry.severity === 'warning' 

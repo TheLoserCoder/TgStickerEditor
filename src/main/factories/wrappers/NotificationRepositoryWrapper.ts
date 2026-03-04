@@ -26,7 +26,12 @@ export class NotificationRepositoryWrapper {
           const isMutating = !READONLY_METHODS.some(prefix => prop.startsWith(prefix));
 
           if (isMutating && typeof target.transform === 'function') {
-            const transformed = target.transform(result);
+            let transformed = target.transform(result);
+            
+            if (prop === 'delete' && transformed?.deleted && args[0]) {
+              transformed = args[0];
+            }
+            
             if (transformed !== null) {
               notifier.notifyChange(`${target.domain}:${prop}`, transformed);
             }

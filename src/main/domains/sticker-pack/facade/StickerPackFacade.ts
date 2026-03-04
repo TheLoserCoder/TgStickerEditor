@@ -299,48 +299,52 @@ export class StickerPackFacade implements IStickerPackFacade {
   }
 
   async createGroupFromFragments(packId: string, cellIds: string[]): Promise<GridLayout> {
-    const manifest = await this.getPack(packId);
-    if (!manifest?.gridLayout) {
-      throw new Error(StickerPackError.PACK_NOT_FOUND);
-    }
+    return this.notifier.notifyGroup(NotificationGroup.UPDATE, async () => {
+      const manifest = await this.getPack(packId);
+      if (!manifest?.gridLayout) {
+        throw new Error(StickerPackError.PACK_NOT_FOUND);
+      }
 
-    const packPath = await this.packService.getPackPath(packId);
-    if (!packPath) {
-      throw new Error(StickerPackError.PACK_NOT_FOUND);
-    }
+      const packPath = await this.packService.getPackPath(packId);
+      if (!packPath) {
+        throw new Error(StickerPackError.PACK_NOT_FOUND);
+      }
 
-    const newGroupId = this.idGenerator.generate();
-    const currentGrid = this.gridService.loadGrid(packId, manifest.type, manifest.gridLayout);
-    const gridEntity = this.gridService.createGroupFromFragments(currentGrid, cellIds, newGroupId);
+      const newGroupId = this.idGenerator.generate();
+      const currentGrid = this.gridService.loadGrid(packId, manifest.type, manifest.gridLayout);
+      const gridEntity = this.gridService.createGroupFromFragments(currentGrid, cellIds, newGroupId);
 
-    const fragmentIds = cellIds.filter(id => manifest.fragments.some(f => f.id === id));
-    if (fragmentIds.length > 0) {
-      await this.fragmentService.updateFragmentGroupBatch(packPath, fragmentIds, newGroupId);
-    }
-    await this.manifestService.updateWithGrid(packPath, gridEntity);
-    return gridEntity.toDTO();
+      const fragmentIds = cellIds.filter(id => manifest.fragments.some(f => f.id === id));
+      if (fragmentIds.length > 0) {
+        await this.fragmentService.updateFragmentGroupBatch(packPath, fragmentIds, newGroupId);
+      }
+      await this.manifestService.updateWithGrid(packPath, gridEntity);
+      return gridEntity.toDTO();
+    });
   }
 
   async removeFragmentsFromGroup(packId: string, cellIds: string[]): Promise<GridLayout> {
-    const manifest = await this.getPack(packId);
-    if (!manifest?.gridLayout) {
-      throw new Error(StickerPackError.PACK_NOT_FOUND);
-    }
+    return this.notifier.notifyGroup(NotificationGroup.UPDATE, async () => {
+      const manifest = await this.getPack(packId);
+      if (!manifest?.gridLayout) {
+        throw new Error(StickerPackError.PACK_NOT_FOUND);
+      }
 
-    const packPath = await this.packService.getPackPath(packId);
-    if (!packPath) {
-      throw new Error(StickerPackError.PACK_NOT_FOUND);
-    }
+      const packPath = await this.packService.getPackPath(packId);
+      if (!packPath) {
+        throw new Error(StickerPackError.PACK_NOT_FOUND);
+      }
 
-    const currentGrid = this.gridService.loadGrid(packId, manifest.type, manifest.gridLayout);
-    const gridEntity = this.gridService.removeFragmentsFromGroup(currentGrid, cellIds);
+      const currentGrid = this.gridService.loadGrid(packId, manifest.type, manifest.gridLayout);
+      const gridEntity = this.gridService.removeFragmentsFromGroup(currentGrid, cellIds);
 
-    const fragmentIds = cellIds.filter(id => manifest.fragments.some(f => f.id === id));
-    if (fragmentIds.length > 0) {
-      await this.fragmentService.updateFragmentGroupBatch(packPath, fragmentIds, null);
-    }
-    await this.manifestService.updateWithGrid(packPath, gridEntity);
-    return gridEntity.toDTO();
+      const fragmentIds = cellIds.filter(id => manifest.fragments.some(f => f.id === id));
+      if (fragmentIds.length > 0) {
+        await this.fragmentService.updateFragmentGroupBatch(packPath, fragmentIds, null);
+      }
+      await this.manifestService.updateWithGrid(packPath, gridEntity);
+      return gridEntity.toDTO();
+    });
   }
 
   async deleteFragments(packId: string, fragmentIds: string[]): Promise<GridLayout> {
