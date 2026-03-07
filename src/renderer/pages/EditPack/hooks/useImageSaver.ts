@@ -66,6 +66,8 @@ export const useImageSaver = (
               rescaleQuality: mapRescaleQuality(imageSettings.rescaleQuality),
               fragmentColumns: imageSettings.columns,
               fragmentRows: imageSettings.rows,
+              borderSize: imageSettings.border,
+              dividerMode: imageSettings.dividerMode,
             };
 
             return {

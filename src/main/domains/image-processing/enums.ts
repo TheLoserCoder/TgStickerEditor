@@ -17,7 +17,9 @@ export enum ProcessingStage {
   DETECT_CONVERT = 'detect-convert',
   TRIM = 'trim',
   RESCALE = 'rescale',
+  PRECOMPRESS = 'precompress',
   FRAGMENT = 'fragment',
+  PADDING = 'padding',
   CONVERT_WEBP = 'convert-webp',
   AGGREGATE = 'aggregate'
 }
@@ -26,7 +28,9 @@ export enum StageWeight {
   DETECT_CONVERT = 1.0,
   TRIM = 1.0,
   RESCALE = 1.0,
+  PRECOMPRESS = 0.5,
   FRAGMENT = 1.0,
+  PADDING = 0.5,
   CONVERT_WEBP = 1.0,
   AGGREGATE = 1.0
 }

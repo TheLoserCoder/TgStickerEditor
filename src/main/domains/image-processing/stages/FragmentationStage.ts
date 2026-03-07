@@ -5,6 +5,7 @@ import { TaskPriority } from '../../task-balancer/enums';
 import { RescaledImage, ImageFragment } from '../../../../shared/domains/image-processing/types';
 import { ProcessingStage, StageWeight } from '../enums';
 import { appendFileSync } from 'fs';
+import { promises as fs } from 'fs';
 import { join } from 'path';
 import { getFFmpegPath, getFFprobePath } from '../../../utils/ffmpeg-path';
 
@@ -34,40 +35,79 @@ export class FragmentationStage implements IPipelineStage<RescaledImage, ImageFr
     }
 
     const imageId = data.payload.sessionId;
-    log(`[FragmentationStage] START: imageId=${imageId}`);
+    const { fragmentColumns, fragmentRows } = data.payload.settings;
+    const totalFragments = fragmentColumns * fragmentRows;
+    
+    log(`[FragmentationStage] START: imageId=${imageId}, grid=${fragmentColumns}x${fragmentRows}`);
 
-    const fragments = await this.taskBalancer.execute<RescaledImage, ImageFragment[]>({
-      taskType: 'fragment',
-      data: data.payload,
-      priority: this.priority,
-      weight: this.weight
-    });
-
-    log(`[FragmentationStage] FRAGMENTED: imageId=${imageId}, fragmentsCount=${fragments.length}`);
-
-    const remainingStages = 3;
-    const pointsPerFragment = POINTS_PER_STAGE / fragments.length;
-    log(`[FragmentationStage] Points per fragment per stage: ${pointsPerFragment} (${POINTS_PER_STAGE} / ${fragments.length})`);
-
-    for (const fragment of fragments) {
-      if (signal.aborted) {
-        throw new Error('Processing aborted');
+    try {
+      const outputDir = data.payload.tempPath.replace(/\.[^.]+$/, '_fragments');
+      await fs.mkdir(outputDir, { recursive: true });
+      
+      const pointsPerFragment = POINTS_PER_STAGE / totalFragments;
+      log(`[FragmentationStage] Points per fragment: ${pointsPerFragment}`);
+      
+      // Запускаем нарезку ВСЕХ тайлов параллельно
+      const promises: Promise<ImageFragment>[] = [];
+      for (let row = 0; row < fragmentRows; row++) {
+        for (let col = 0; col < fragmentColumns; col++) {
+          const promise = this.taskBalancer.execute<any, ImageFragment>({
+            taskType: 'fragment-single',
+            data: {
+              imagePath: data.payload.tempPath,
+              outputDir,
+              row,
+              col,
+              cellSize: data.payload.cellSize,
+              isAnimated: data.payload.isAnimated,
+              sessionId: data.payload.sessionId,
+              format: data.payload.format,
+              frameTimings: data.payload.frameTimings,
+              originalFileName: data.payload.originalFileName,
+              packId: data.payload.packId,
+              packType: data.payload.packType,
+              groupId: data.payload.groupId
+            },
+            priority: this.priority,
+            weight: 1.0 / totalFragments
+          });
+          promises.push(promise);
+        }
       }
       
-      const fragmentWithPaths = {
-        ...fragment,
-        ffmpegPath: getFFmpegPath(),
-        ffprobePath: getFFprobePath()
-      };
+      log(`[FragmentationStage] Launched ${promises.length} parallel tasks`);
       
-      const fragmentData = data.withPayload(fragmentWithPaths).withMetadata({
-        fragmentPoints: pointsPerFragment
-      });
+      // Yield по мере завершения
+      let completedCount = 0;
       
-      log(`[FragmentationStage] YIELD: fragmentId=${fragment.fragmentId}, fragmentPoints=${pointsPerFragment}`);
-      yield fragmentData;
-    }
+      for (const promise of promises) {
+        if (signal.aborted) {
+          throw new Error('Processing aborted');
+        }
+        
+        const fragment = await promise;
+        completedCount++;
+        
+        log(`[FragmentationStage] Fragment ready (${completedCount}/${totalFragments}): tile=[${fragment.row},${fragment.col}]`);
+        
+        const fragmentWithPaths = {
+          ...fragment,
+          ffmpegPath: getFFmpegPath(),
+          ffprobePath: getFFprobePath()
+        };
+        
+        const fragmentData = data.withPayload(fragmentWithPaths).withMetadata({
+          fragmentPoints: pointsPerFragment
+        });
+        
+        yield fragmentData;
+      }
 
-    log(`[FragmentationStage] END: imageId=${imageId}`);
+      log(`[FragmentationStage] END: imageId=${imageId}`);
+    } catch (error) {
+      log(`[FragmentationStage] ERROR: imageId=${imageId}, error=${error instanceof Error ? error.message : String(error)}`);
+      log(`[FragmentationStage] Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
+      throw error;
+    }
   }
 }

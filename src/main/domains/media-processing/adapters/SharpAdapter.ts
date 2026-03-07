@@ -94,6 +94,40 @@ export class SharpAdapter implements ISharpAdapter {
   }
 
   /**
+   * Конвертировать buffer в другой формат
+   */
+  async convertBuffer(
+    inputBuffer: Buffer,
+    options: SharpConvertOptions
+  ): Promise<Buffer> {
+    const { format, quality = 80, lossless = false, effort = 4, animated = false } = options;
+
+    const pipeline = sharp(inputBuffer, { animated });
+
+    switch (format) {
+      case 'webp':
+        pipeline.webp({ quality, lossless, effort, loop: 0 });
+        break;
+      case 'png':
+        pipeline.png({ quality, effort });
+        break;
+      case 'jpeg':
+        pipeline.jpeg({ quality });
+        break;
+      case 'gif':
+        pipeline.gif({ effort: effort as 1|2|3|4|5|6|7|8|9|10 });
+        break;
+      case 'avif':
+        pipeline.avif({ quality, effort });
+        break;
+      default:
+        throw new Error(`Unsupported format: ${format}`);
+    }
+
+    return pipeline.toBuffer();
+  }
+
+  /**
    * Извлечь регион из изображения
    */
   async extract(
@@ -216,51 +250,64 @@ export class SharpAdapter implements ISharpAdapter {
     columns: number,
     rows: number
   ): Promise<string[]> {
-    await fs.mkdir(outputDir, { recursive: true });
+    try {
+      await fs.mkdir(outputDir, { recursive: true });
 
-    const metadata = await this.getMetadata(inputPath);
-    const { width, height, isAnimated } = metadata;
+      const metadata = await this.getMetadata(inputPath);
+      const { width, height, isAnimated } = metadata;
 
-    // Оптимизация: для grid 1×1 просто копируем файл
-    if (columns === 1 && rows === 1) {
-      const outputName = `tile_0_0.webp`;
-      const outputPath = path.join(outputDir, outputName);
-      await fs.copyFile(inputPath, outputPath);
-      return [outputPath];
-    }
+      console.log(`[SharpAdapter.tile] START: ${columns}x${rows}, size=${width}x${height}, animated=${isAnimated}`);
 
-    const tileWidth = Math.floor(width / columns);
-    const tileHeight = Math.floor(height / rows);
-    const results: string[] = [];
-    const outputExt = '.webp';
-
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < columns; c++) {
-        const left = c * tileWidth;
-        const top = r * tileHeight;
-        const extractWidth = c === columns - 1 ? width - left : tileWidth;
-        const extractHeight = r === rows - 1 ? height - top : tileHeight;
-
-        if (extractWidth <= 0 || extractHeight <= 0) {
-          continue;
-        }
-
-        const outputName = `tile_${r}_${c}${outputExt}`;
+      // Оптимизация: для grid 1×1 просто копируем файл
+      if (columns === 1 && rows === 1) {
+        const outputName = `tile_0_0.webp`;
         const outputPath = path.join(outputDir, outputName);
-
-        await sharp(inputPath, {
-          animated: isAnimated,
-          limitInputPixels: false,
-        })
-          .extract({ left, top, width: extractWidth, height: extractHeight })
-          .webp({ lossless: true, loop: 0 })
-          .toFile(outputPath);
-
-        results.push(outputPath);
+        await fs.copyFile(inputPath, outputPath);
+        console.log(`[SharpAdapter.tile] 1x1 optimization: copied file`);
+        return [outputPath];
       }
-    }
 
-    return results;
+      const tileWidth = Math.floor(width / columns);
+      const tileHeight = Math.floor(height / rows);
+      const results: string[] = [];
+      const outputExt = '.webp';
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < columns; c++) {
+          const left = c * tileWidth;
+          const top = r * tileHeight;
+          const extractWidth = c === columns - 1 ? width - left : tileWidth;
+          const extractHeight = r === rows - 1 ? height - top : tileHeight;
+
+          if (extractWidth <= 0 || extractHeight <= 0) {
+            continue;
+          }
+
+          const outputName = `tile_${r}_${c}${outputExt}`;
+          const outputPath = path.join(outputDir, outputName);
+
+          console.log(`[SharpAdapter.tile] Processing tile [${r},${c}]: ${extractWidth}x${extractHeight}`);
+
+          await sharp(inputPath, {
+            animated: isAnimated,
+            limitInputPixels: false,
+          })
+            .extract({ left, top, width: extractWidth, height: extractHeight })
+            .webp({ lossless: true, loop: 0 })
+            .toFile(outputPath);
+
+          console.log(`[SharpAdapter.tile] Tile [${r},${c}] saved: ${outputPath}`);
+          results.push(outputPath);
+        }
+      }
+
+      console.log(`[SharpAdapter.tile] DONE: ${results.length} tiles created`);
+      return results;
+    } catch (error) {
+      console.error(`[SharpAdapter.tile] ERROR: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(`[SharpAdapter.tile] Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
+      throw error;
+    }
   }
 
   /**
@@ -291,5 +338,32 @@ export class SharpAdapter implements ISharpAdapter {
         // По умолчанию webp
         pipeline.webp({ quality: 80, effort: 4, loop: 0 });
     }
+  }
+
+  /**
+   * Добавить прозрачный пиксель для принудительной альфы в VP9
+   */
+  async addTransparentPixel(
+    inputPath: string,
+    outputPath: string
+  ): Promise<void> {
+    const metadata = await sharp(inputPath).metadata();
+    const isAnimated = !!metadata.pages && metadata.pages > 1;
+
+    // Создаём буфер с одним почти прозрачным пикселем (RGBA: 0,0,0,254)
+    // Alpha=254 вместо 1, чтобы VP9 гарантированно видел альфа-канал
+    const transparentPixel = Buffer.from([0, 0, 0, 254]);
+
+    await sharp(inputPath, { animated: isAnimated })
+      .ensureAlpha()
+      .composite([{
+        input: transparentPixel,
+        raw: { width: 1, height: 1, channels: 4 },
+        top: metadata.pageHeight ? metadata.pageHeight - 1 : (metadata.height || 1) - 1,
+        left: (metadata.width || 1) - 1,
+        blend: 'over'
+      }])
+      .webp({ quality: 90, lossless: false, effort: 6, loop: 0 })
+      .toFile(outputPath);
   }
 }

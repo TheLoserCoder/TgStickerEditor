@@ -38,6 +38,16 @@ export interface ExtractOptions {
 }
 
 /**
+ * Результат фрагментации
+ */
+export interface FragmentResult {
+  paths: string[];
+  duration: number;
+  fps: number;
+  frameCount: number;
+}
+
+/**
  * Интерфейс FFmpeg адаптера
  */
 export interface IFFmpegAdapter {
@@ -82,4 +92,32 @@ export interface IFFmpegAdapter {
     outputPath: string,
     options: ExtractOptions
   ): Promise<void>;
+
+  /**
+   * Фрагментация анимации на тайлы с конвертацией в WebM
+   */
+  fragmentToWebM(
+    inputPath: string,
+    outputDir: string,
+    columns: number,
+    rows: number,
+    tileSize: number,
+    maxDuration: number,
+    crf: number
+  ): Promise<FragmentResult>;
+}
+
+  /**
+   * Нарезка PNG атласа напрямую на WebM тайлы
+   */
+  fragmentPNGAtlasToWebM(
+    atlasPath: string,
+    outputDir: string,
+    columns: number,
+    rows: number,
+    tileSize: number,
+    frameCount: number,
+    fps: number,
+    crf: number
+  ): Promise<FragmentResult>;
 }

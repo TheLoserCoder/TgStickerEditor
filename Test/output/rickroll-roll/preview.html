@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>rickroll-roll - Tiles Preview</title>
+  <style>
+    body { margin: 20px; background: #222; color: #fff; font-family: monospace; }
+    h1 { margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(2, 512px); gap: 2px; background: #000; width: fit-content; }
+    video { width: 512px; height: 512px; display: block; }
+    .info { margin-top: 20px; background: #333; padding: 10px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>rickroll-roll</h1>
+  <div class="grid">
+    <video src="rickroll-roll_tile_0_0.webm" autoplay loop muted></video>
+    <video src="rickroll-roll_tile_0_1.webm" autoplay loop muted></video>
+    <video src="rickroll-roll_tile_1_0.webm" autoplay loop muted></video>
+    <video src="rickroll-roll_tile_1_1.webm" autoplay loop muted></video>
+  </div>
+  <div class="info">
+    <p>✓ Coordinate aggregation</p>
+    <p>✓ Direct PNG atlas → WebM tiles</p>
+    <p>✓ CRF caching between files</p>
+    <p>✓ Binary search for optimal quality</p>
+    <p>Total tiles: 4</p>
+  </div>
+</body>
+</html>

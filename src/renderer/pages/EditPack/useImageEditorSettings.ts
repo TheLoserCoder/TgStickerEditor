@@ -173,6 +173,8 @@ export const useImageEditorSettings = () => {
           crop: settings.enableTrim,
           rescaleQuality: mapRescaleQuality(settings.rescaleQuality),
           animation: settings.enableAnimation,
+          border: settings.borderSize || 0,
+          dividerMode: settings.dividerMode,
         },
         individualSettings: {},
       },

@@ -8,7 +8,9 @@ import { PipelineOrchestrator } from '../../pipeline/core/PipelineOrchestrator';
 import { DetectConvertStage } from '../stages/DetectConvertStage';
 import { TrimStage } from '../stages/TrimStage';
 import { RescaleStage } from '../stages/RescaleStage';
+import { PreCompressionStage } from '../stages/PreCompressionStage';
 import { FragmentationStage } from '../stages/FragmentationStage';
+import { PaddingStage } from '../stages/PaddingStage';
 import { ConvertToWebpStage } from '../stages/ConvertToWebpStage';
 import { AggregationStage } from '../stages/AggregationStage';
 import { IIPCBridge } from '../../ipc/interfaces/IIPCBridge';
@@ -49,7 +51,9 @@ export class ImageProcessingService implements IImageProcessingService {
       .addStage(new DetectConvertStage(this.taskBalancer))
       .addStage(new TrimStage(this.taskBalancer))
       .addStage(new RescaleStage(this.taskBalancer))
+      .addStage(new PreCompressionStage(this.taskBalancer))
       .addStage(new FragmentationStage(this.taskBalancer))
+      .addStage(new PaddingStage(this.taskBalancer))
       .addStage(new ConvertToWebpStage(this.taskBalancer))
       .addStage(aggregationStage);
 

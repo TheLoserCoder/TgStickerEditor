@@ -50,6 +50,7 @@ export const PresetDialog: React.FC<PresetDialogProps> = ({
   const [crop, setCrop] = useState(true);
   const [rescaleQuality, setRescaleQuality] = useState('none');
   const [animation, setAnimation] = useState(true);
+  const [border, setBorder] = useState(0);
 
   useEffect(() => {
     if (preset) {
@@ -59,6 +60,7 @@ export const PresetDialog: React.FC<PresetDialogProps> = ({
       setCrop(preset.settings.enableTrim);
       setRescaleQuality(mapRescaleQualityReverse(preset.settings.rescaleQuality));
       setAnimation(preset.settings.enableAnimation);
+      setBorder(preset.settings.borderSize || 0);
     } else {
       setName('');
       setColumns(1);
@@ -66,6 +68,7 @@ export const PresetDialog: React.FC<PresetDialogProps> = ({
       setCrop(true);
       setRescaleQuality('none');
       setAnimation(true);
+      setBorder(0);
     }
   }, [preset, open]);
 
@@ -77,6 +80,7 @@ export const PresetDialog: React.FC<PresetDialogProps> = ({
         rescaleQuality: mapRescaleQuality(rescaleQuality),
         fragmentColumns: columns,
         fragmentRows: rows,
+        borderSize: border,
       };
       onSubmit(preset?.id || null, name.trim(), settings);
       onOpenChange(false);
@@ -120,6 +124,14 @@ export const PresetDialog: React.FC<PresetDialogProps> = ({
             min={1}
             max={10}
             onChange={setRows}
+          />
+
+          <Counter
+            label={PRESET_DIALOG_LABELS.BORDER}
+            value={border}
+            min={0}
+            max={20}
+            onChange={setBorder}
           />
 
           <Flex direction={FlexDirection.COLUMN} gap={FlexGap.XSMALL}>

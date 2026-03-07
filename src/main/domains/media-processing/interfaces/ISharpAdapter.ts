@@ -130,4 +130,12 @@ export interface ISharpAdapter {
     columns: number,
     rows: number
   ): Promise<string[]>; // Возвращает пути к файлам
+
+  /**
+   * Добавить прозрачный пиксель для принудительной альфы в VP9
+   */
+  addTransparentPixel(
+    inputPath: string,
+    outputPath: string
+  ): Promise<void>;
 }

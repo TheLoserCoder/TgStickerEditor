@@ -98,6 +98,22 @@ export class SmartGridCalculator implements ISmartGridCalculator {
     }
   }
 
+  private hasRealCollision(groupCells: GridCell[], occupied: Set<string>): boolean {
+    return groupCells.some(c => occupied.has(CELL_KEY(c.row, c.col)));
+  }
+
+  private trimEmptyRows(cells: GridCell[], columns: number): { cells: GridCell[]; rows: number } {
+    const nonEmptyCells = cells.filter(c => !isEmptyCell(c));
+    if (nonEmptyCells.length === 0) {
+      return { cells: [], rows: 0 };
+    }
+
+    const maxRow = Math.max(...nonEmptyCells.map(c => c.row));
+    const trimmedCells = cells.filter(c => c.row <= maxRow);
+    
+    return { cells: trimmedCells, rows: maxRow + 1 };
+  }
+
   moveSingleFragment(layout: GridLayout, fragmentId: string, targetRow: number, targetCol: number): GridLayout {
     const sourceCell = layout.cells.find(c => c.fragmentId === fragmentId);
     if (!sourceCell || isEmptyCell(sourceCell)) {
@@ -112,6 +128,9 @@ export class SmartGridCalculator implements ISmartGridCalculator {
     const groupedOthers = new Map<string, GridCell[]>();
     
     for (const cell of otherCells) {
+      // Пропускаем default группу - это одиночные фрагменты
+      if (cell.groupId === 'default') continue;
+      
       if (!groupedOthers.has(cell.groupId)) {
         groupedOthers.set(cell.groupId, []);
       }
@@ -120,8 +139,15 @@ export class SmartGridCalculator implements ISmartGridCalculator {
 
     const resultCells: GridCell[] = [movedCell];
 
+    // Добавляем одиночные фрагменты (default) без проверки коллизии
+    for (const cell of otherCells) {
+      if (cell.groupId === 'default') {
+        resultCells.push(cell);
+      }
+    }
+
     for (const [otherGroupId, cells] of groupedOthers) {
-      const hasCollision = cells.some(c => occupied.has(CELL_KEY(c.row, c.col)));
+      const hasCollision = this.hasRealCollision(cells, occupied);
       
       if (!hasCollision) {
         for (const cell of cells) {
@@ -198,36 +224,33 @@ export class SmartGridCalculator implements ISmartGridCalculator {
       }
     }
 
-    const maxRow = Math.max(...resultCells.filter(c => !isEmptyCell(c)).map(c => c.row));
+    const nonEmptyCells = resultCells.filter(c => !isEmptyCell(c));
+    const maxRow = Math.max(...nonEmptyCells.map(c => c.row));
     const cellMap = new Map<string, GridCell>();
-    
-    for (const cell of resultCells) {
-      cellMap.set(CELL_KEY(cell.row, cell.col), cell);
-    }
 
     for (let row = 0; row <= maxRow; row++) {
       for (let col = 0; col < layout.columns; col++) {
         const key = CELL_KEY(row, col);
-        if (!cellMap.has(key)) {
-          cellMap.set(key, {
-            id: this.idGenerator.generate(),
-            fragmentId: null,
-            groupId: 'default',
-            row,
-            col
-          });
-        }
+        const existing = resultCells.find(c => c.row === row && c.col === col);
+        cellMap.set(key, existing || {
+          id: this.idGenerator.generate(),
+          fragmentId: null,
+          groupId: 'default',
+          row,
+          col
+        });
       }
     }
 
-    const sortedCells = Array.from(cellMap.values())
-      .filter(c => c.row <= maxRow)
+    const allCells = Array.from(cellMap.values())
       .sort((a, b) => {
         if (a.row !== b.row) return a.row - b.row;
         return a.col - b.col;
       });
 
-    return { columns: layout.columns, rows: maxRow + 1, cells: sortedCells, groups: layout.groups };
+    const { cells: trimmedCells, rows: trimmedRows } = this.trimEmptyRows(allCells, layout.columns);
+    const groups = this.updateGroupsFromCells(trimmedCells);
+    return { columns: layout.columns, rows: trimmedRows, cells: trimmedCells, groups };
   }
 
   moveGroup(layout: GridLayout, groupId: string, targetRow: number, targetCol: number): GridLayout {
@@ -258,6 +281,9 @@ export class SmartGridCalculator implements ISmartGridCalculator {
     const groupedOthers = new Map<string, GridCell[]>();
     
     for (const cell of otherCells) {
+      // Пропускаем default группу - это одиночные фрагменты
+      if (cell.groupId === 'default') continue;
+      
       if (!groupedOthers.has(cell.groupId)) {
         groupedOthers.set(cell.groupId, []);
       }
@@ -266,9 +292,16 @@ export class SmartGridCalculator implements ISmartGridCalculator {
 
     const resultCells: GridCell[] = [...movedCells];
 
+    // Добавляем одиночные фрагменты (default) без проверки коллизии
+    for (const cell of otherCells) {
+      if (cell.groupId === 'default') {
+        resultCells.push(cell);
+      }
+    }
+
     // Для каждой группы проверяем коллизию
     for (const [otherGroupId, cells] of groupedOthers) {
-      const hasCollision = cells.some(c => occupied.has(CELL_KEY(c.row, c.col)));
+      const hasCollision = this.hasRealCollision(cells, occupied);
       
       if (!hasCollision) {
         // Нет коллизии - оставляем на месте
@@ -359,37 +392,34 @@ export class SmartGridCalculator implements ISmartGridCalculator {
     }
 
     // Создаем финальную сетку
-    const maxRow = Math.max(...resultCells.filter(c => !isEmptyCell(c)).map(c => c.row));
+    const nonEmptyCells = resultCells.filter(c => !isEmptyCell(c));
+    const maxRow = Math.max(...nonEmptyCells.map(c => c.row));
     const cellMap = new Map<string, GridCell>();
-    
-    for (const cell of resultCells) {
-      cellMap.set(CELL_KEY(cell.row, cell.col), cell);
-    }
 
     // Заполняем пустые ячейки
     for (let row = 0; row <= maxRow; row++) {
       for (let col = 0; col < layout.columns; col++) {
         const key = CELL_KEY(row, col);
-        if (!cellMap.has(key)) {
-          cellMap.set(key, {
-            id: this.idGenerator.generate(),
-            fragmentId: null,
-            groupId: 'default',
-            row,
-            col
-          });
-        }
+        const existing = resultCells.find(c => c.row === row && c.col === col);
+        cellMap.set(key, existing || {
+          id: this.idGenerator.generate(),
+          fragmentId: null,
+          groupId: 'default',
+          row,
+          col
+        });
       }
     }
 
-    const sortedCells = Array.from(cellMap.values())
-      .filter(c => c.row <= maxRow)
+    const allCells = Array.from(cellMap.values())
       .sort((a, b) => {
         if (a.row !== b.row) return a.row - b.row;
         return a.col - b.col;
       });
 
-    return { columns: layout.columns, rows: maxRow + 1, cells: sortedCells, groups: layout.groups };
+    const { cells: trimmedCells, rows: trimmedRows } = this.trimEmptyRows(allCells, layout.columns);
+    const groups = this.updateGroupsFromCells(trimmedCells);
+    return { columns: layout.columns, rows: trimmedRows, cells: trimmedCells, groups };
   }
 
   moveFragment(layout: GridLayout, fragmentId: string, targetRow: number, targetCol: number): GridLayout {

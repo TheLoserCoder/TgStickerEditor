@@ -12,5 +12,8 @@ export class EditorPresetValidator {
     if (!settings || typeof settings !== 'object') {
       throw new Error(PresetValidationError.INVALID_SETTINGS);
     }
+    if (settings.borderSize < 0) {
+      throw new Error(PresetValidationError.INVALID_SETTINGS);
+    }
   }
 }

@@ -10,6 +10,8 @@ export class GrammyAdapter implements ITelegramAdapter {
     
     const customFetch = async (url: string, init?: any) => {
       try {
+        console.log(`[customFetch] Request to ${url}, body type: ${init?.body?.constructor?.name}`);
+        
         const options: any = {
           method: init?.method || 'GET',
           url: url,
@@ -27,6 +29,12 @@ export class GrammyAdapter implements ITelegramAdapter {
             }
             options.data = formData;
             options.headers = { ...options.headers, ...formData.getHeaders() };
+            
+            // Логируем размер FormData
+            if (options.data.getLengthSync) {
+              const formDataSize = options.data.getLengthSync();
+              console.log(`[customFetch] FormData size: ${formDataSize} bytes`);
+            }
           } else {
             options.data = init.body;
           }
@@ -86,19 +94,39 @@ export class GrammyAdapter implements ITelegramAdapter {
     stickerType: string
   ): Promise<void> {
     const isVideo = format === 'video';
-    await this.bot.api.createNewStickerSet(
-      userId,
-      name,
-      title,
-      [
-        {
-          sticker: new InputFile(sticker, isVideo ? 'sticker.webm' : 'sticker.webp'),
-          emoji_list: [emoji],
-          format: format as any,
-        },
-      ],
-      stickerType === 'custom_emoji' ? { sticker_type: 'custom_emoji' } : undefined
-    );
+    const fileName = isVideo ? 'sticker.webm' : 'sticker.webp';
+    
+    console.log(`[GrammyAdapter] createStickerSet: format="${format}", isVideo=${isVideo}, size=${sticker.length}, fileName=${fileName}, stickerType=${stickerType}`);
+    
+    try {
+      await this.bot.api.createNewStickerSet(
+        userId,
+        name,
+        title,
+        [
+          {
+            sticker: new InputFile(sticker, fileName),
+            emoji_list: [emoji],
+            format: format as any,
+          },
+        ],
+        stickerType === 'custom_emoji' ? { sticker_type: 'custom_emoji' } : undefined
+      );
+      
+      console.log(`[GrammyAdapter] createStickerSet: SUCCESS`);
+    } catch (error: any) {
+      console.error(`[GrammyAdapter] createStickerSet ERROR: ${error.message}`);
+      console.error(`[GrammyAdapter] Error details:`, {
+        format,
+        isVideo,
+        fileSize: sticker.length,
+        fileName,
+        stickerType,
+        errorDescription: error.description,
+        errorCode: error.error_code
+      });
+      throw error;
+    }
   }
 
   async addStickerToSet(
@@ -109,22 +137,41 @@ export class GrammyAdapter implements ITelegramAdapter {
     format: string
   ): Promise<string> {
     const isVideo = format === 'video';
-    await this.bot.api.addStickerToSet(
-      userId,
-      name,
-      {
-        sticker: new InputFile(sticker, isVideo ? 'sticker.webm' : 'sticker.webp'),
-        emoji_list: [emoji],
-        format: format as any,
+    const fileName = isVideo ? 'sticker.webm' : 'sticker.webp';
+    
+    console.log(`[GrammyAdapter] addStickerToSet: format="${format}", isVideo=${isVideo}, size=${sticker.length}, fileName=${fileName}`);
+    
+    try {
+      await this.bot.api.addStickerToSet(
+        userId,
+        name,
+        {
+          sticker: new InputFile(sticker, fileName),
+          emoji_list: [emoji],
+          format: format as any,
+        }
+      );
+      
+      console.log(`[GrammyAdapter] addStickerToSet: SUCCESS`);
+      
+      const stickerSet = await this.getStickerSet(name);
+      if (stickerSet?.stickers?.length > 0) {
+        return stickerSet.stickers[stickerSet.stickers.length - 1].file_id;
       }
-    );
-    
-    const stickerSet = await this.getStickerSet(name);
-    if (stickerSet?.stickers?.length > 0) {
-      return stickerSet.stickers[stickerSet.stickers.length - 1].file_id;
+      
+      throw new Error('Failed to get fileId after adding sticker');
+    } catch (error: any) {
+      console.error(`[GrammyAdapter] addStickerToSet ERROR: ${error.message}`);
+      console.error(`[GrammyAdapter] Error details:`, {
+        format,
+        isVideo,
+        fileSize: sticker.length,
+        fileName,
+        errorDescription: error.description,
+        errorCode: error.error_code
+      });
+      throw error;
     }
-    
-    throw new Error('Failed to get fileId after adding sticker');
   }
 
   async getStickerSet(name: string): Promise<{ stickers: Array<{ file_id: string }> } | null> {

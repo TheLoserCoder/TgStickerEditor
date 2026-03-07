@@ -6,9 +6,13 @@ export const FRAGMENT_UTILITY_TOKEN = 'FRAGMENT_UTILITY';
 export const WEBP_CONVERTER_TOKEN = 'WEBP_CONVERTER';
 export const IMAGE_PROCESSING_SERVICE_TOKEN = 'IMAGE_PROCESSING_SERVICE';
 
-export const GIF_MAX_DURATION = 2.99;
-export const GIF_TARGET_FPS = 30;
+export const ANIMATION_MAX_DURATION = 2.99;
+export const ANIMATION_MAX_FRAMES = 24;
+export const ANIMATION_TARGET_FPS = 24;
 export const GIF_MIN_SPEED_FACTOR = 0.5;
+
+export const STATIC_TILE_LIMIT = 512 * 1024;
+export const VIDEO_TILE_LIMIT = 256 * 1024;
 
 export const TRIM_THRESHOLD = 10;
 

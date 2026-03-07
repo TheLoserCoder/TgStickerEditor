@@ -19,6 +19,7 @@ export const PRESET_DIALOG_LABELS = {
   CROP: 'Обрезка пустот',
   RESCALE_QUALITY: 'Умный рескейл',
   ANIMATION: 'Анимация',
+  BORDER: 'Граница (px)',
   CANCEL: 'Отмена',
   CREATE: 'Создать',
   SAVE: 'Сохранить',

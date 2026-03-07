@@ -114,38 +114,49 @@ export class TelegramPackFacade implements ITelegramPackFacade {
   }
 
   async updatePack(request: UploadPackRequest): Promise<UploadResult> {
+    console.log('[TelegramPackFacade] updatePack started', { packId: request.packId });
+    
     const pack = await this.stickerPackFacade.getPack(request.packId);
     
     if (!pack || !pack.gridLayout) {
+      console.error('[TelegramPackFacade] Pack or grid not found');
       return { success: false, error: 'Пак или сетка не найдены' };
     }
 
     if (!pack.telegramPack || !pack.telegramPack.name || !pack.telegramPack.userId) {
+      console.error('[TelegramPackFacade] Pack not uploaded to Telegram');
       return { success: false, error: 'Пак еще не был загружен в Telegram' };
     }
 
     const botToken = request.botToken;
     if (!botToken) {
+      console.error('[TelegramPackFacade] Bot token missing');
       return { success: false, error: 'Не указан токен бота' };
     }
 
+    console.log('[TelegramPackFacade] Creating GrammyAdapter');
     const adapter = new GrammyAdapter(botToken);
     
+    console.log('[TelegramPackFacade] Validating bot');
     const botValidation = await adapter.validateBot();
     if (!botValidation.isValid) {
+      console.error('[TelegramPackFacade] Bot validation failed');
       return { success: false, error: 'Токен бота недействителен или бот неактивен' };
     }
 
     const packPath = await this.stickerPackFacade.getStickerPackPath(request.packId);
     const flatCells = gridToFlatArray(pack.gridLayout);
+    console.log('[TelegramPackFacade] Total cells to upload:', flatCells.length);
 
     try {
+      console.log('[TelegramPackFacade] Getting sticker set');
       const stickerSet = await adapter.getStickerSet(pack.telegramPack.name);
       if (!stickerSet) {
+        console.error('[TelegramPackFacade] Sticker set not found');
         return { success: false, error: 'Стикерпак не найден в Telegram' };
       }
 
-      // Удаляем все стикеры кроме последнего (нельзя удалить последний)
+      console.log('[TelegramPackFacade] Deleting old stickers');
       const stickerIds = stickerSet.stickers.map(s => s.file_id);
       const totalToDelete = stickerIds.length - 1;
       
@@ -158,21 +169,19 @@ export class TelegramPackFacade implements ITelegramPackFacade {
         await this.delay(TELEGRAM_UPLOAD_DELAY);
       }
 
-      // Загружаем все ячейки из сетки
       const userId = request.userId || pack.telegramPack.userId;
       const stickerType = pack.type === 'EMOJI' 
         ? TelegramStickerType.CUSTOM_EMOJI 
         : TelegramStickerType.REGULAR;
       
-      // Сбрасываем прогресс загрузки перед началом
+      console.log('[TelegramPackFacade] Uploading all stickers');
       this.ipcBridge.send(TelegramIPCChannel.UPLOAD_PROGRESS, { current: 0, total: flatCells.length });
       
       await this.uploadStickersToSet(adapter, { ...request, userId, stickerType }, pack.telegramPack.name, flatCells, pack, packPath, 0);
 
-      // Удаляем последний старый стикер
+      console.log('[TelegramPackFacade] Deleting last old sticker');
       await adapter.deleteStickerFromSet(stickerIds[stickerIds.length - 1]);
 
-      // Обновляем манифест с botId и userId (для миграции старых паков)
       const botId = request.botId || pack.telegramPack.botId;
       
       await this.manifestService.update(packPath, {
@@ -185,10 +194,13 @@ export class TelegramPackFacade implements ITelegramPackFacade {
 
       const packUrl = `${TELEGRAM_PACK_URL_BASE}${pack.telegramPack.name}`;
       
+      console.log('[TelegramPackFacade] Sending success message');
       await adapter.sendMessage(userId, `Стикерпак успешно обновлен!\n${packUrl}`);
 
+      console.log('[TelegramPackFacade] Update completed successfully');
       return { success: true, packUrl };
     } catch (error: any) {
+      console.error('[TelegramPackFacade] Update error:', error);
       return this.handleError(error);
     }
   }
@@ -257,16 +269,22 @@ export class TelegramPackFacade implements ITelegramPackFacade {
     fragment: any,
     packPath: string
   ): Promise<string> {
-    const buffer = await this.fileSystem.readFile(`${packPath}/fragments/${fragment.fileName}`);
-    const format = this.detectFormat(fragment.fileName);
+    try {
+      const buffer = await this.fileSystem.readFile(`${packPath}/fragments/${fragment.fileName}`);
+      const format = this.detectFormat(fragment.fileName);
+      console.log('[TelegramPackFacade] Uploading cell:', fragment.fileName);
 
-    return await adapter.addStickerToSet(
-      request.userId,
-      packName,
-      buffer,
-      TELEGRAM_DEFAULT_EMOJI,
-      format
-    );
+      return await adapter.addStickerToSet(
+        request.userId,
+        packName,
+        buffer,
+        TELEGRAM_DEFAULT_EMOJI,
+        format
+      );
+    } catch (error: any) {
+      console.error('[TelegramPackFacade] Error uploading cell:', fragment?.fileName, error.message);
+      return await this.uploadEmptyCell(adapter, request, packName);
+    }
   }
 
   private async uploadEmptyCell(
@@ -274,16 +292,22 @@ export class TelegramPackFacade implements ITelegramPackFacade {
     request: UploadPackRequest,
     packName: string
   ): Promise<string> {
-    const size = this.getEmptyImageSize(request.stickerType);
-    const buffer = await this.emptyImageGenerator.generate(size);
+    try {
+      const size = this.getEmptyImageSize(request.stickerType);
+      const buffer = await this.emptyImageGenerator.generate(size);
+      console.log('[TelegramPackFacade] Uploading empty cell');
 
-    return await adapter.addStickerToSet(
-      request.userId,
-      packName,
-      buffer,
-      TELEGRAM_DEFAULT_EMOJI,
-      TelegramStickerFormat.STATIC
-    );
+      return await adapter.addStickerToSet(
+        request.userId,
+        packName,
+        buffer,
+        TELEGRAM_DEFAULT_EMOJI,
+        TelegramStickerFormat.STATIC
+      );
+    } catch (error: any) {
+      console.error('[TelegramPackFacade] Error uploading empty cell:', error.message);
+      throw error;
+    }
   }
 
   private async reorderStickers(

@@ -16,6 +16,8 @@ export interface ImageEditorSettings {
   rescaleQuality: RescaleQuality;
   animation: boolean;
   zoom: number;
+  border: number;
+  dividerMode: boolean;
 }
 
 export const DEFAULT_SETTINGS: ImageEditorSettings = {
@@ -25,6 +27,8 @@ export const DEFAULT_SETTINGS: ImageEditorSettings = {
   rescaleQuality: RescaleQuality.NONE,
   animation: true,
   zoom: 100,
+  border: 0,
+  dividerMode: false,
 };
 
 export const RESCALE_QUALITY_OPTIONS = [
@@ -41,6 +45,9 @@ export const BOOLEAN_OPTIONS = [
 export const ZOOM_STEP = 10;
 export const MIN_ZOOM = 10;
 export const MAX_ZOOM = 500;
+
+export const MIN_BORDER = 0;
+export const MAX_BORDER = 20;
 
 export const CONFIRMATION_MESSAGES = {
   RESET_INDIVIDUAL_SETTINGS: {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Flex, Select, Button, Progress, Text } from '@radix-ui/themes';
 import { ImageIcon, DownloadIcon, ZoomInIcon, ZoomOutIcon, ResetIcon } from '@radix-ui/react-icons';
-import { ImageEditorSettings, RESCALE_QUALITY_OPTIONS, BOOLEAN_OPTIONS, ZOOM_STEP, MIN_ZOOM, MAX_ZOOM } from '@/renderer/config/imageEditor.config';
+import { ImageEditorSettings, RESCALE_QUALITY_OPTIONS, BOOLEAN_OPTIONS, ZOOM_STEP, MIN_ZOOM, MAX_ZOOM, MIN_BORDER, MAX_BORDER } from '@/renderer/config/imageEditor.config';
 import { EditorPreset } from '@/shared/domains/editor-preset/types';
 import { SIDEBAR_CONSTANTS, SIDEBAR_LABELS } from './sidebarConstants';
 import { Counter } from './Counter';
@@ -72,6 +72,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onChange={(value) => onSettingsChange({ rows: value })}
         />
 
+        <Counter
+          label={SIDEBAR_LABELS.BORDER}
+          value={settings.border}
+          min={MIN_BORDER}
+          max={MAX_BORDER}
+          onChange={(value) => onSettingsChange({ border: value })}
+        />
+
         <Flex direction="column" gap="2">
           <label className={styles.label}>{SIDEBAR_LABELS.CROP}</label>
           <Select.Root
@@ -111,6 +119,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Select.Root
             value={settings.animation ? 'true' : 'false'}
             onValueChange={(value) => onSettingsChange({ animation: value === 'true' })}
+          >
+            <Select.Trigger className={styles.select} />
+            <Select.Content>
+              {BOOLEAN_OPTIONS.map((opt) => (
+                <Select.Item key={opt.value} value={opt.value}>
+                  {opt.label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select.Root>
+        </Flex>
+
+        <Flex direction="column" gap="2">
+          <label className={styles.label}>{SIDEBAR_LABELS.DIVIDER_MODE}</label>
+          <Select.Root
+            value={settings.dividerMode ? 'true' : 'false'}
+            onValueChange={(value) => onSettingsChange({ dividerMode: value === 'true' })}
           >
             <Select.Trigger className={styles.select} />
             <Select.Content>

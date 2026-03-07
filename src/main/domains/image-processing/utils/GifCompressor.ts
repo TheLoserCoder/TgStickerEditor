@@ -1,7 +1,7 @@
 import { IGifCompressor } from './IGifCompressor';
 import { IFFmpegAdapter } from '../../media-processing/adapters/IFFmpegAdapter';
 import { ImageProcessingError } from '../enums';
-import { GIF_MIN_SPEED_FACTOR, GIF_TARGET_FPS } from '../constants';
+import { GIF_MIN_SPEED_FACTOR, ANIMATION_TARGET_FPS } from '../constants';
 
 export class GifCompressor implements IGifCompressor {
   constructor(private ffmpegAdapter: IFFmpegAdapter) {}
@@ -33,7 +33,7 @@ export class GifCompressor implements IGifCompressor {
     outputPath: string,
     frameSkip: number
   ): Promise<void> {
-    const fps = GIF_TARGET_FPS / frameSkip;
+    const fps = ANIMATION_TARGET_FPS / frameSkip;
     await this.ffmpegAdapter.convert(inputPath, outputPath, {
       fps,
       format: 'gif'

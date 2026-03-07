@@ -7,6 +7,8 @@ export interface ProcessingSettings {
   rescaleQuality: RescaleQuality;
   fragmentColumns: number;
   fragmentRows: number;
+  borderSize: number;
+  dividerMode: boolean;
 }
 
 export interface ImageInput {
@@ -29,6 +31,8 @@ export interface DetectedImage {
   isAnimated: boolean;
   hasAlpha: boolean;
   duration?: number;
+  frameCount?: number;
+  frameTimings?: number[];
   originalFileName: string;
   packId: string;
   packType: StickerPackType;
@@ -45,6 +49,8 @@ export interface TrimmedImage {
   isAnimated: boolean;
   hasAlpha: boolean;
   duration?: number;
+  frameCount?: number;
+  frameTimings?: number[];
   originalFileName: string;
   packId: string;
   packType: StickerPackType;
@@ -60,11 +66,15 @@ export interface RescaledImage {
   height: number;
   isAnimated: boolean;
   cellSize: number;
+  frameCount?: number;
+  frameTimings?: number[];
   originalFileName: string;
   packId: string;
   packType: StickerPackType;
   groupId: string;
   settings: ProcessingSettings;
+  ffmpegPath?: string;
+  ffprobePath?: string;
 }
 
 export interface ImageFragment {
@@ -75,6 +85,7 @@ export interface ImageFragment {
   width: number;
   height: number;
   isAnimated: boolean;
+  frameTimings?: number[];
   row: number;
   col: number;
   originalFileName: string;

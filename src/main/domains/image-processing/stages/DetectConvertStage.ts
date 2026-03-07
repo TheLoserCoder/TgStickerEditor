@@ -39,19 +39,25 @@ export class DetectConvertStage extends WorkerStage<ImageInput, DetectedImage> {
 
     log(`[DetectConvertStage] START: imageId=${data.payload.path}`);
 
-    const result = await this.taskBalancer.execute<ImageInput, DetectedImage>({
-      taskType: this.getTaskType(),
-      data: { ...data.payload, ffmpegPath: getFFmpegPath(), ffprobePath: getFFprobePath() },
-      priority: this.priority,
-      weight: this.weight
-    });
+    try {
+      const result = await this.taskBalancer.execute<ImageInput, DetectedImage>({
+        taskType: this.getTaskType(),
+        data: { ...data.payload, ffmpegPath: getFFmpegPath(), ffprobePath: getFFprobePath() },
+        priority: this.priority,
+        weight: this.weight
+      });
 
-    if (signal.aborted) {
-      throw new Error('Processing aborted');
+      if (signal.aborted) {
+        throw new Error('Processing aborted');
+      }
+      
+      log(`[DetectConvertStage] YIELD: sessionId=${result.sessionId}`);
+      yield data.withPayload(result);
+      log(`[DetectConvertStage] END: imageId=${data.payload.path}`);
+    } catch (error) {
+      log(`[DetectConvertStage] ERROR: imageId=${data.payload.path}, error=${error instanceof Error ? error.message : String(error)}`);
+      log(`[DetectConvertStage] Stack: ${error instanceof Error ? error.stack : 'N/A'}`);
+      throw error;
     }
-    
-    log(`[DetectConvertStage] YIELD: sessionId=${result.sessionId}`);
-    yield data.withPayload(result);
-    log(`[DetectConvertStage] END: imageId=${data.payload.path}`);
   }
 }

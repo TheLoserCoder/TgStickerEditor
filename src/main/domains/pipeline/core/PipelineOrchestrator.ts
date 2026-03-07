@@ -44,7 +44,7 @@ export class PipelineOrchestrator<TInput, TOutput> {
         
         const pipelines = input.map((item, index) => {
           const itemSessionId = `${sessionId}_${index}`;
-          const context = new TaskContext(itemSessionId);
+          const context = new TaskContext(itemSessionId, { settings: (item as any).settings });
           const data = new PipelineData(item, context);
           return this.runSinglePipeline(data, signal);
         });
@@ -57,7 +57,7 @@ export class PipelineOrchestrator<TInput, TOutput> {
       }
 
       // Обычный последовательный pipeline для одного элемента
-      const context = new TaskContext(sessionId);
+      const context = new TaskContext(sessionId, { settings: (input as any).settings });
       const initialData = new PipelineData(input, context);
       const results: TOutput[] = [];
       const generator = this.processChain(initialData, 0, signal);
